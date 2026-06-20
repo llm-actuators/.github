@@ -50,7 +50,7 @@ Drive phones and browsers from an LLM. All three emit the same semantic schema s
 | | |
 |---|---|
 | [`skill-router`](https://github.com/llm-actuators/skill-router) | PreToolUse hook engine — enforces "always go through skill X" invariants on every Bash call. |
-| [`substrate`](https://github.com/llm-actuators/substrate) | Skill ecosystem CLI — enrolls repos, deploys T1/T2 skills, validates invariants. |
+| [`substrate`](https://github.com/llm-actuators/substrate) | Skill ecosystem CLI + scaffold spec. Enrolls repos, deploys T1/T2 skills, validates F1–F16 invariants. Hosts the three META primitives still bundled with the spec (`substrate`, `bootstrap`, `dashboard`); the rest are extracted siblings (`skill-router`, `compact-self`, `token-monitor`, `claude-sandbox`). |
 | [`claude-sandbox`](https://github.com/llm-actuators/claude-sandbox) | macOS Seatbelt profile + `nosandbox` escape hatch for tools that fail under the sandbox. |
 | [`actuators-doctor`](https://github.com/llm-actuators/actuators-doctor) | Fleet-wide health probe — version drift, dep resolution, schema compat, env preconditions. |
 
