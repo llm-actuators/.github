@@ -32,7 +32,7 @@ Drive phones and browsers from an LLM. All three emit the same semantic schema s
 | | |
 |---|---|
 | [`switchboard`](https://github.com/llm-actuators/switchboard) | File-based pub/sub for multi-Claude sessions. Append-only JSONL, flock-based presence, no daemon. |
-| [`recruit`](https://github.com/llm-actuators/recruit) | Mid-session teammate spawner — splits the tmux window, launches `claude-safe`, pre-wires the new pane onto the recruiter's switchboard channel. Repo also ships `dismiss`, `retune`, and `idle-scout`. |
+| [`recruit`](https://github.com/llm-actuators/recruit) | Mid-session teammate spawner — splits the tmux window, launches `claude-safe`, pre-wires the new pane onto the recruiter's switchboard channel. Repo also ships `dismiss` and `idle-scout`. |
 
 ### Session management
 | | |
