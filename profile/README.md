@@ -72,3 +72,7 @@ Drive phones and browsers from an LLM. All three emit the same semantic schema s
 ## Interactive architecture map
 
 [**View the interactive toolchain map →**](https://llm-actuators.github.io/)
+
+## How the fleet is governed
+
+[**Read the governance model →**](https://github.com/llm-actuators/.github/blob/main/governance.md) — the problems that forced each rule, and the principles they left behind.
