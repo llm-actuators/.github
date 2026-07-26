@@ -68,3 +68,7 @@ Drive phones and browsers from an LLM. All three emit the same semantic schema s
 - **Self-describing.** Every binary supports `--version`; the manifest contract (`--manifest json` for dep declarations) is rolling out so `actuators-doctor` can audit relationships mechanically.
 - **LLM-first, human-friendly.** Output is structured (JSONL, YAML) for machines; pretty-print modes exist for humans who want to read along.
 - **No magic.** Composition is explicit (env vars, tmux tags, schema YAML) — no hidden discovery, no silent fallbacks.
+
+## Interactive architecture map
+
+[**View the interactive toolchain map →**](https://htmlpreview.github.io/?https://github.com/llm-actuators/.github/blob/main/nutshell.html)
