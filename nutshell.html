@@ -26,6 +26,11 @@
   .tag{color:var(--ink);font-size:17px;max-width:720px;line-height:1.55}
   .tag b{color:var(--accent2);font-weight:600}
   .sub{color:var(--muted);font-size:14px;margin-top:11px;max-width:760px}
+  .links{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+  .oref{font-family:var(--mono);font-size:13px;font-weight:600;background:var(--panel2);border:1px solid var(--line2);border-radius:8px;padding:9px 15px;color:var(--accent2);transition:.14s}
+  .oref:hover{border-color:var(--accent);text-decoration:none;color:var(--ink)}
+  .oref.solid{background:var(--accent);border-color:var(--accent);color:#08120f}
+  .oref.solid:hover{background:var(--accent2);color:#08120f}
 
   .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:30px 0 6px}
   .bar .lbl{font-family:var(--mono);color:var(--faint);font-size:11px;text-transform:uppercase;letter-spacing:.1em;margin-right:2px}
@@ -88,8 +93,13 @@
 
   <div class="kick">llm-actuators</div>
   <h1>The system in a nutshell</h1>
-  <div class="tag">Sterile primitives that let an <b>LLM drive a real machine</b> — devices, browsers, designs, processes, and other agents. Each tool does one thing through a parseable CLI; the power is how they <b>compose</b> into a supervised multi-agent fleet.</div>
-  <div class="sub">Hover any box to trace its integrations — <span style="color:var(--accent2)">teal = what it drives</span>, <span style="color:var(--teal)">coral = what drives it</span>. Or run a scenario to watch a real task flow through the stack.</div>
+  <div class="tag">The open toolchain behind a <b>supervised multi-agent fleet</b>. These are the sterile primitives that let <b>LLM agents drive real machines</b> — physical phones, browsers, Figma designs, running processes, and each other — then <b>compose</b> into a system that ships production software under human guardrails. Each tool does one job through a parseable CLI; the power is in how they connect.</div>
+  <div class="sub">27 single-purpose repos across Rust, Swift, Go and Shell. Hover any box below to trace its integrations — <span style="color:var(--accent2)">teal = what it drives</span>, <span style="color:var(--teal)">coral = what drives it</span> — or run a scenario to watch a real task flow through the stack.</div>
+
+  <div class="links">
+    <a class="oref solid" href="https://github.com/llm-actuators/llms" target="_blank" rel="noopener">Start here → llms · the LLM-first index</a>
+    <a class="oref" href="https://github.com/llm-actuators" target="_blank" rel="noopener">↗ Browse all 27 repos on GitHub</a>
+  </div>
 
   <div class="bar">
     <span class="lbl">Scenario:</span>
@@ -120,6 +130,7 @@
   <div class="legend" id="legend"></div>
   <div class="foot">
     27 single-purpose repos across Rust, Swift, Go and Shell — supervised, R&amp;D-grade, self-built. Every line is a runtime integration between tools; the arrow points from the caller to what it drives. One canonical layer model; the static architecture diagram in the org README renders the same graph.
+    <div style="margin-top:12px">Explore the code: <a href="https://github.com/llm-actuators">github.com/llm-actuators</a> · start at <a href="https://github.com/llm-actuators/llms">llms</a>, the entrypoint index.</div>
   </div>
 </div>
 
