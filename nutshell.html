@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>llm-actuators — the system in a nutshell</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&display=swap');
+  :root{
+    --bg:#0c0d10;--panel:#131419;--panel2:#171922;--line:#23252d;--line2:#2f323c;
+    --ink:#e7e8ec;--muted:#9aa0ab;--faint:#666c77;
+    --accent:#4db6a4;--accent2:#74d2c0;--teal:#e0876f;
+    --rust:#d98a4a;--swift:#e06a5e;--go:#48b0c4;--shell:#78b56a;--meta:#a78bd6;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  .wrap{max-width:1140px;margin:0 auto;padding:44px 24px 100px}
+
+  .kick{font-family:var(--mono);color:var(--accent);font-weight:600;letter-spacing:.18em;text-transform:uppercase;font-size:11.5px}
+  h1{font-size:30px;margin:12px 0 10px;letter-spacing:-.6px;font-weight:700}
+  .tag{color:var(--ink);font-size:17px;max-width:720px;line-height:1.55}
+  .tag b{color:var(--accent2);font-weight:600}
+  .sub{color:var(--muted);font-size:14px;margin-top:11px;max-width:760px}
+
+  .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:30px 0 6px}
+  .bar .lbl{font-family:var(--mono);color:var(--faint);font-size:11px;text-transform:uppercase;letter-spacing:.1em;margin-right:2px}
+  .btn{background:var(--panel2);border:1px solid var(--line2);color:var(--muted);font-family:inherit;font-size:13px;padding:7px 14px;border-radius:7px;cursor:pointer;transition:.14s}
+  .btn:hover{border-color:var(--accent);color:var(--ink)}
+  .btn.on{background:var(--accent);border-color:var(--accent);color:#08120f;font-weight:600}
+  .btn.ghost{background:transparent;color:var(--faint)}
+  .btn.ghost:hover{color:var(--ink);border-color:var(--line2)}
+
+  .stagewrap{position:relative;margin-top:16px}
+  .stack{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel)}
+  #edges{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:2}
+  .band{padding:17px 20px;border-bottom:1px solid var(--line);position:relative;z-index:1}
+  .band:last-child{border-bottom:none}
+  .band .bh{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
+  .band .bt{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--accent2)}
+  .band .bd{color:var(--faint);font-size:13px}
+  .row{display:flex;flex-wrap:wrap;gap:9px;position:relative;z-index:3}
+  .chip{display:inline-flex;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--line2);
+    border-radius:8px;padding:8px 12px;cursor:pointer;transition:.13s;position:relative;z-index:3}
+  .chip:hover{border-color:var(--accent)}
+  .chip .dot{width:7px;height:7px;border-radius:50%;flex:none}
+  .chip .nm{font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:.1px}
+  .chip .lg{font-family:var(--mono);font-size:9.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.06em}
+  .chip.hub{border-color:#2f4a45}
+  .chip.hub .nm::after{content:"HUB";font-family:var(--mono);font-size:8px;font-weight:700;color:var(--accent);background:rgba(77,182,164,.12);
+    border:1px solid rgba(77,182,164,.35);padding:1px 4px;border-radius:4px;margin-left:7px;letter-spacing:.08em;vertical-align:middle}
+  .chip.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+  .chip.dep{border-color:var(--accent)}
+  .chip.rev{border-color:var(--teal)}
+  .chip.path{border-color:var(--accent);background:rgba(77,182,164,.1)}
+  .chip.hushed{opacity:.28}
+  .dot.rust{background:var(--rust)}.dot.swift{background:var(--swift)}.dot.go{background:var(--go)}.dot.shell{background:var(--shell)}.dot.meta{background:var(--meta)}
+
+  .detail{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 22px;min-height:120px}
+  .detail .dnm{font-family:var(--mono);font-size:16px;font-weight:700}
+  .detail .lgbadge{font-family:var(--mono);font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:5px;margin-left:9px;vertical-align:middle;text-transform:uppercase;letter-spacing:.05em}
+  .detail .dlayer{font-family:var(--mono);color:var(--accent2);font-size:11px;text-transform:uppercase;letter-spacing:.09em;margin:5px 0 12px}
+  .detail .prob{font-size:15px;color:var(--ink);max-width:820px;line-height:1.6}
+  .detail .q{font-family:var(--mono);color:var(--faint);font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;display:block;margin-bottom:4px}
+  .deps{display:flex;flex-wrap:wrap;gap:26px;margin-top:16px}
+  .deps .col{font-size:13px}
+  .deps .ch{font-family:var(--mono);color:var(--faint);font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
+  .deps .col.out .ch b{color:var(--accent2)} .deps .col.in .ch b{color:var(--teal)}
+  .deps a{font-family:var(--mono);display:inline-block;margin:2px 9px 2px 0;font-size:12.5px}
+  .detail .lnk{margin-top:14px;font-size:12.5px}
+  .detail .lnk a{font-family:var(--mono)}
+  .detail.empty{display:flex;align-items:center}
+  .detail.empty .prob{color:var(--faint)}
+
+  .legend{display:flex;flex-wrap:wrap;gap:18px;margin-top:20px;color:var(--muted);font-size:12.5px;align-items:center}
+  .legend .li{display:inline-flex;align-items:center;gap:6px}
+  .legend .ln{width:24px;height:0;border-top:2px solid var(--accent)}
+  .foot{color:var(--faint);font-size:12.5px;margin-top:28px;border-top:1px solid var(--line);padding-top:16px;max-width:820px;line-height:1.6}
+  .foot code{font-family:var(--mono);font-size:11.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="kick">llm-actuators</div>
+  <h1>The system in a nutshell</h1>
+  <div class="tag">Sterile primitives that let an <b>LLM drive a real machine</b> — devices, browsers, designs, processes, and other agents. Each tool does one thing through a parseable CLI; the power is how they <b>compose</b> into a supervised multi-agent fleet.</div>
+  <div class="sub">Hover any box to trace its integrations — <span style="color:var(--accent2)">teal = what it drives</span>, <span style="color:var(--teal)">coral = what drives it</span>. Or run a scenario to watch a real task flow through the stack.</div>
+
+  <div class="bar">
+    <span class="lbl">Scenario:</span>
+    <button class="btn" data-scn="ios">UI test on a real iPhone</button>
+    <button class="btn" data-scn="build">Multi-agent build</button>
+    <button class="btn" data-scn="web">Drive a web panel safely</button>
+    <button class="btn" data-scn="ops">Keep the fleet healthy</button>
+    <span style="width:14px"></span>
+    <button class="btn ghost" id="showall">Show all links</button>
+    <button class="btn ghost" id="reset">Reset</button>
+  </div>
+
+  <div class="stagewrap">
+    <div class="stack" id="stack">
+      <svg id="edges"><defs>
+        <marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+          <path d="M0,0 L7,3 L0,6 Z" fill="var(--accent)"></path></marker>
+        <marker id="ahT" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+          <path d="M0,0 L7,3 L0,6 Z" fill="var(--teal)"></path></marker>
+        <marker id="ahF" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+          <path d="M0,0 L7,3 L0,6 Z" fill="#4a5468"></path></marker>
+      </defs></svg>
+    </div>
+  </div>
+
+  <div id="scncap" class="detail"><div class="prob"><b>27 tools, one job each — composed into one supervised fleet.</b> Three backbone hubs carry the system: <b style="color:var(--accent2)">switchboard</b> (the message bus), <b style="color:var(--accent2)">substrate</b> (the scaffold), and <b style="color:var(--accent2)">semantic-schema</b> (the shared data contract). Hover any box to trace its integrations, or run a scenario above.</div></div>
+
+  <div class="legend" id="legend"></div>
+  <div class="foot">
+    27 single-purpose repos across Rust, Swift, Go and Shell — supervised, R&amp;D-grade, self-built. Every line is a runtime integration between tools; the arrow points from the caller to what it drives. One canonical layer model; the static architecture diagram in the org README renders the same graph.
+  </div>
+</div>
+
+<script>
+const LANGS={rust:"Rust",swift:"Swift",go:"Go",shell:"Shell",meta:"—"};
+const LAYERS=[
+ {t:"Entry",d:"where an LLM starts",repos:[
+   {id:"llms",lang:"meta",p:"The canonical LLM-first index to the whole toolchain — the single 'start here' entrypoint that tells an agent what exists and how to call it."},
+   {id:"specs",lang:"meta",p:"Cross-repo specifications and workflow references — the shared contracts the tools agree on."},
+ ]},
+ {t:"Control & policy plane",d:"the guardrails — what an agent may do, before it does it",repos:[
+   {id:"skill-router",lang:"rust",p:"The guardrail router. A PreToolUse hook that matches every tool call against TOML rules and allows, denies, or reroutes it — policy-as-code, enforced before the action runs."},
+   {id:"workflows",lang:"rust",p:"A workflow state-machine enforcer over hooks — stops an agent skipping required steps or acting out of order."},
+   {id:"substrate",lang:"rust",p:"The scaffolding layer. Skills + primitives + configs + hooks + memory, organized so adding a new project, company, or primitive is one command."},
+ ]},
+ {t:"Coordination substrate",d:"the nervous system — how agents and devices talk and stay out of each other's way",repos:[
+   {id:"switchboard",lang:"rust",p:"The message bus. File-based pub/sub for multi-session coordination — one log per channel, one cursor per subscriber, durable JSONL on disk, no broker to run."},
+   {id:"switchboard-ios",lang:"swift",p:"A native SwiftUI client that lets you watch and post to the switchboard wire from an iPhone."},
+   {id:"todo",lang:"rust",p:"A priority-aware, Markdown-backed shared todo list for an agent cohort to coordinate work."},
+   {id:"device-claim",lang:"rust",p:"A per-device mutex so two agents never drive the same physical device at once — lease-based locking with liveness."},
+   {id:"resources",lang:"rust",p:"Enumerates every active device, simulator and emulator and which claims are in flight — the fleet's view of what's available."},
+ ]},
+ {t:"Actuation — the bridges",d:"the hands — one CLI per surface an agent needs to touch",repos:[
+   {id:"idb",lang:"swift",p:"Control a real iPhone. A unified CLI over WebDriverAgent for touch, gestures and app control — the physical-device layer for iOS."},
+   {id:"ddb",lang:"rust",p:"Control a real Android device. One CLI replacing a pile of adb scripts, scrcpy wrappers and heartbeat daemons."},
+   {id:"wdb",lang:"go",p:"Drive a browser or web admin panel. A single zero-dependency Go binary — 'adb for the web'."},
+   {id:"fdb",lang:"rust",p:"Read a Figma design as structured data. Extracts a UI semantic schema from design frames via the Figma API — so an agent can compare intent to implementation."},
+   {id:"vdb",lang:"rust",p:"Catch visual UI drift across platforms. Cross-platform drift detection and a region matrix over the shared schema."},
+   {id:"visual-qa",lang:"rust",p:"The device-automation framework tying the bridges together. Semantic agents extract the live UI tree at runtime; tests are declarative YAML, cross-platform."},
+   {id:"semantic-schema",lang:"rust",p:"The shared UI wire format. The canonical Rust types that let the Android, iOS and web bridges all speak one schema."},
+   {id:"device-control-ios",lang:"swift",p:"The WebDriverAgent integration that powers idb's control of physical iPhones."},
+   {id:"tctl",lang:"rust",p:"Test-control CLI for authoring and running device test cases against the bridges. [inferred — no README yet]"},
+ ]},
+ {t:"Fleet lifecycle",d:"spawning, running and containing the agents themselves",repos:[
+   {id:"recruit",lang:"shell",p:"Spawn a teammate mid-session. Splits a tmux pane into a fresh agent seat on demand; its counterpart 'dismiss' retires one cleanly."},
+   {id:"fleet-tui",lang:"rust",p:"The mission-control dashboard. A read-only terminal view of every project bucket and every live agent at a glance."},
+   {id:"compact-self",lang:"shell",p:"Lets a running session compact its own context by injecting /compact into the TUI — self-maintenance under long runs."},
+   {id:"remote-control",lang:"shell",p:"Injects /remote-control into a running session from its own tmux pane — hand control to or from an operator."},
+   {id:"idle-work",lang:"rust",p:"Chunk + interrupt-safety helpers so long idle-pool work can be paused and resumed without corruption."},
+   {id:"claude-sandbox",lang:"shell",p:"Runs the agent inside a macOS Seatbelt sandbox, plus the tooling to actually live and work inside that boundary."},
+ ]},
+ {t:"Observability & ops",d:"keeping a supervised fleet boring, dependable and on-budget",repos:[
+   {id:"token-monitor",lang:"shell",p:"Reads a session's live token usage from the transcript on disk — so agent spend can be budgeted and monitored in real time."},
+   {id:"burn",lang:"shell",p:"Aggregates token-burn across every session in the fleet — the cost picture across many agents at once."},
+   {id:"actuators-doctor",lang:"rust",p:"A fleet-wide health check that verifies every llm-actuators binary is present, current and working."},
+ ]},
+];
+// edges: [from, to, kind]  — "from depends on / drives / uses to".  kind: 'code' (Cargo dep) | 'int' (documented integration)
+const EDGES=[
+ ["ddb","semantic-schema","code"],["vdb","semantic-schema","code"],["device-claim","idb","code"],["todo","substrate","code"],
+ ["idb","semantic-schema","int"],["fdb","semantic-schema","int"],["tctl","semantic-schema","int"],
+ ["tctl","idb","int"],["tctl","ddb","int"],["visual-qa","idb","int"],["visual-qa","ddb","int"],
+ ["idb","device-control-ios","int"],["device-claim","ddb","int"],["resources","idb","int"],["resources","ddb","int"],
+ ["recruit","switchboard","int"],["skill-router","switchboard","int"],["resources","switchboard","int"],
+ ["fleet-tui","switchboard","int"],["switchboard-ios","switchboard","int"],["idle-work","switchboard","int"],
+ ["substrate","skill-router","int"],["substrate","workflows","int"],["substrate","switchboard","int"],
+ ["substrate","token-monitor","int"],["substrate","compact-self","int"],
+ ["fleet-tui","substrate","int"],["fleet-tui","todo","int"],["recruit","substrate","int"],["recruit","idle-work","int"],
+ ["burn","token-monitor","int"],["remote-control","compact-self","int"],
+ ["actuators-doctor","idb","int"],["actuators-doctor","ddb","int"],["actuators-doctor","switchboard","int"],
+ ["actuators-doctor","token-monitor","int"],["actuators-doctor","recruit","int"],
+];
+const SCENARIOS={
+ ios:{cap:"<b>Run a UI test on a real iPhone.</b> A teammate is spawned, joins the wire, clears the guardrails, drives the physical device, reads its live UI, and checks it against the schema for drift.",path:["recruit","switchboard","skill-router","idb","semantic-schema","vdb"]},
+ build:{cap:"<b>Coordinate a multi-agent build.</b> Agents are recruited, talk over the bus, pull shared work, are held to the workflow, and are watched from one dashboard.",path:["recruit","switchboard","todo","workflows","fleet-tui"]},
+ web:{cap:"<b>Drive a web admin panel — safely.</b> Every action is checked against policy before it runs, the browser is driven headlessly, and the result is diffed for visual drift.",path:["skill-router","wdb","vdb"]},
+ ops:{cap:"<b>Keep the fleet healthy and on-budget.</b> Binaries are health-checked, per-session and fleet-wide token spend is tracked, all surfaced in mission control.",path:["actuators-doctor","token-monitor","burn","fleet-tui"]},
+};
+
+// compute hubs = most-connected nodes
+const deg={}; EDGES.forEach(([a,b])=>{deg[a]=(deg[a]||0)+1;deg[b]=(deg[b]||0)+1;});
+const HUBS=new Set(Object.entries(deg).filter(([,n])=>n>=5).map(([k])=>k));
+
+const ALL={}; LAYERS.forEach(L=>L.repos.forEach(r=>{r.layer=L.t;ALL[r.id]=r;}));
+const outOf=id=>EDGES.filter(e=>e[0]===id);
+const inTo =id=>EDGES.filter(e=>e[1]===id);
+
+const stack=document.getElementById('stack');
+const svg=document.getElementById('edges');
+LAYERS.forEach(L=>{
+  const band=document.createElement('div');band.className='band';
+  band.innerHTML=`<div class="bh"><span class="bt">${L.t}</span><span class="bd">${L.d}</span></div>`;
+  const row=document.createElement('div');row.className='row';
+  L.repos.forEach(r=>{
+    const c=document.createElement('div');c.className='chip'+(HUBS.has(r.id)?' hub':'');c.dataset.id=r.id;
+    c.innerHTML=`<span class="dot ${r.lang}"></span><span class="nm">${r.id}</span><span class="lg">${LANGS[r.lang]}</span>`;
+    c.addEventListener('mouseenter',()=>{if(!pinned)preview(r.id);});
+    c.addEventListener('mouseleave',()=>{if(!pinned)clearAll();});
+    c.addEventListener('click',e=>{e.stopPropagation();pin(r.id);});
+    row.appendChild(c);
+  });
+  band.appendChild(row);stack.appendChild(band);
+});
+document.body.addEventListener('click',()=>{if(pinned){pinned=null;clearAll();}});
+
+const LGCOLOR={rust:"var(--rust)",swift:"var(--swift)",go:"var(--go)",shell:"var(--shell)",meta:"var(--meta)"};
+let pinned=null;
+
+function center(id){
+  const c=document.querySelector(`.chip[data-id="${id}"]`);if(!c)return null;
+  const cr=c.getBoundingClientRect(),sr=stack.getBoundingClientRect();
+  return {x:cr.left-sr.left+cr.width/2, y:cr.top-sr.top+cr.height/2, w:cr.width, h:cr.height};
+}
+function sizeSvg(){svg.setAttribute('width',stack.clientWidth);svg.setAttribute('height',stack.clientHeight);
+  svg.setAttribute('viewBox',`0 0 ${stack.clientWidth} ${stack.clientHeight}`);}
+function edgePath(a,b){
+  const dx=b.x-a.x,dy=b.y-a.y, curve=Math.min(60,Math.abs(dy)*.4+20);
+  // start/end at box edges vertically
+  const sy=a.y+(dy>0?a.h/2-3:-a.h/2+3), ey=b.y+(dy>0?-b.h/2+3:b.h/2-3);
+  const mx=(a.x+b.x)/2;
+  return `M ${a.x} ${sy} C ${mx} ${sy+ (dy>0?curve:-curve)}, ${mx} ${ey+(dy>0?-curve:curve)}, ${b.x} ${ey}`;
+}
+function drawEdge(from,to,color,marker,op,w){
+  const a=center(from),b=center(to);if(!a||!b)return;
+  const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+  p.setAttribute('d',edgePath(a,b));p.setAttribute('fill','none');
+  p.setAttribute('stroke',color);p.setAttribute('stroke-width',w||1.6);
+  p.setAttribute('opacity',op==null?.9:op);
+  if(marker)p.setAttribute('marker-end',`url(#${marker})`);
+  svg.appendChild(p);
+}
+function clearEdges(){[...svg.querySelectorAll('path')].forEach(p=>{if(!p.closest('marker'))p.remove();});}
+function clearChipClasses(){document.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel','dep','rev','path','hushed'));}
+const SUMMARY='<div class="prob"><b>27 tools, one job each — composed into one supervised fleet.</b> Three backbone hubs carry the system: <b style="color:var(--accent2)">switchboard</b> (the message bus), <b style="color:var(--accent2)">substrate</b> (the scaffold), and <b style="color:var(--accent2)">semantic-schema</b> (the shared data contract). Hover any box to trace its integrations, or run a scenario above.</div>';
+function clearAll(){clearEdges();clearChipClasses();document.querySelectorAll('.btn').forEach(b=>b.classList.remove('on'));
+  const cap=document.getElementById('scncap');cap.className='detail';cap.innerHTML=SUMMARY;}
+
+function preview(id){
+  clearEdges();clearChipClasses();sizeSvg();
+  const outs=outOf(id),ins=inTo(id);
+  const nbr=new Set([id]);outs.forEach(e=>nbr.add(e[1]));ins.forEach(e=>nbr.add(e[0]));
+  document.querySelectorAll('.chip').forEach(c=>{if(!nbr.has(c.dataset.id))c.classList.add('hushed');});
+  document.querySelector(`.chip[data-id="${id}"]`).classList.add('sel');
+  outs.forEach(e=>{drawEdge(e[0],e[1],'var(--accent)','ah',.95,1.9);
+    const t=document.querySelector(`.chip[data-id="${e[1]}"]`);if(t)t.classList.add('dep');});
+  ins.forEach(e=>{drawEdge(e[0],e[1],'var(--teal)','ahT',.9,1.9);
+    const s=document.querySelector(`.chip[data-id="${e[0]}"]`);if(s)s.classList.add('rev');});
+  detail(id,outs,ins);
+}
+function pin(id){pinned=id;preview(id);}
+
+function detail(id,outs,ins){
+  const r=ALL[id];const cap=document.getElementById('scncap');cap.className='detail';
+  const link=n=>`<a href="https://github.com/llm-actuators/${n}" target="_blank" rel="noopener">${n}</a>`;
+  const outHtml=outs.length?outs.map(e=>link(e[1])).join(' '):'<span style="color:var(--faint)">— nothing</span>';
+  const inHtml=ins.length?ins.map(e=>link(e[0])).join(' '):'<span style="color:var(--faint)">— nothing</span>';
+  cap.innerHTML=`<div class="dnm">${id}<span class="lgbadge" style="background:${LGCOLOR[r.lang]}22;color:${LGCOLOR[r.lang]}">${LANGS[r.lang]}</span>${HUBS.has(id)?'<span class="lgbadge" style="background:rgba(77,182,164,.14);color:var(--accent)">backbone hub</span>':''}</div>
+    <div class="dlayer">${r.layer}</div>
+    <div class="prob"><span class="q">Problem it solves</span>${r.p}</div>
+    <div class="deps">
+      <div class="col out"><div class="ch"><b>Drives / calls →</b></div>${outHtml}</div>
+      <div class="col in"><div class="ch"><b>← Used by</b></div>${inHtml}</div>
+    </div>
+    <div class="lnk">${link(id)} →</div>`;
+}
+
+function runScenario(key){
+  pinned=null;clearEdges();clearChipClasses();sizeSvg();
+  document.querySelectorAll('.btn').forEach(b=>b.classList.toggle('on',b.dataset.scn===key));
+  const s=SCENARIOS[key];const set=new Set(s.path);
+  document.querySelectorAll('.chip').forEach(c=>{if(set.has(c.dataset.id))c.classList.add('path');else c.classList.add('hushed');});
+  for(let i=0;i<s.path.length-1;i++)drawEdge(s.path[i],s.path[i+1],'var(--accent)','ah',.95,2.2);
+  const cap=document.getElementById('scncap');cap.className='detail';
+  cap.innerHTML=`<div class="prob">${s.cap}</div><div style="margin-top:12px;color:var(--accent2);font-size:14px;letter-spacing:.3px">${s.path.join('  →  ')}</div>`;
+}
+function showAll(){
+  pinned=null;clearEdges();clearChipClasses();sizeSvg();
+  document.getElementById('showall').classList.add('on');
+  EDGES.forEach(e=>{drawEdge(e[0],e[1],'var(--accent)','ah',.5,1.3);});
+  const cap=document.getElementById('scncap');cap.className='detail';
+  cap.innerHTML=`<div class="prob"><b>The whole integration graph.</b> Every line is a runtime integration between two tools; the arrow points from the caller to what it drives. The three glowing boxes — switchboard, substrate, semantic-schema — are the backbone hubs the rest of the system integrates through.</div>`;
+}
+document.querySelectorAll('.btn[data-scn]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();runScenario(b.dataset.scn);}));
+document.getElementById('showall').addEventListener('click',e=>{e.stopPropagation();showAll();});
+document.getElementById('reset').addEventListener('click',e=>{e.stopPropagation();pinned=null;clearAll();});
+
+// legend
+document.getElementById('legend').innerHTML=
+  Object.keys(LANGS).map(k=>`<span class="li"><span class="dot ${k}" style="width:9px;height:9px;border-radius:50%;display:inline-block"></span>${LANGS[k]==='—'?'meta / docs':LANGS[k]}</span>`).join('')
+  +'<span class="li"><span class="ln"></span>drives / calls →</span><span class="li"><span class="ln" style="border-color:var(--teal)"></span>← used by</span>';
+
+function relayout(){sizeSvg();if(pinned)preview(pinned);}
+window.addEventListener('load',()=>{sizeSvg();});
+window.addEventListener('resize',()=>{clearTimeout(window._t);window._t=setTimeout(relayout,120);});
+</script>
+</body>
+</html>
