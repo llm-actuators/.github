@@ -71,4 +71,4 @@ Drive phones and browsers from an LLM. All three emit the same semantic schema s
 
 ## Interactive architecture map
 
-[**View the interactive toolchain map →**](https://htmlpreview.github.io/?https://github.com/llm-actuators/.github/blob/main/nutshell.html)
+[**View the interactive toolchain map →**](https://llm-actuators.github.io/)
