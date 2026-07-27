@@ -10,54 +10,61 @@ Start at **[llms](https://github.com/llm-actuators/llms)** for the canonical ent
 
 ## The fleet
 
-### Device control
-Drive phones and browsers from an LLM. All three emit the same semantic schema so a single visual pipeline works across platforms.
+30 single-purpose tools across Rust, Swift, Go, Python and Shell, organized in the same six layers as the [interactive map](https://llm-actuators.github.io/).
 
+### Entry — where an LLM starts
 | | |
 |---|---|
-| [`ddb`](https://github.com/llm-actuators/ddb) | Android Device Debug Bridge — tap, swipe, type, screenshot, install, logcat. Replaces raw `adb shell input`. |
-| [`idb`](https://github.com/llm-actuators/idb) | iOS Device Debug Bridge — same surface for physical iPhones; drives WebDriverAgent. |
-| [`wdb`](https://github.com/llm-actuators/wdb) | Web Debug Bridge — Chrome DevTools Protocol; 33 verbs for browser automation. |
-| [`WebDriverAgent`](https://github.com/llm-actuators/WebDriverAgent) | Vendored WDA fork that `idb` drives under the hood. |
-| [`semantic-schema`](https://github.com/llm-actuators/semantic-schema) | Shared YAML contract every device bridge emits; `vdb` consumes it. |
-| [`semantic-agent-flutter`](https://github.com/llm-actuators/semantic-agent-flutter) | On-device agent emitting `semantic-schema` from Flutter app trees. |
+| [`llms`](https://github.com/llm-actuators/llms) | The canonical LLM-first index to the whole toolchain — the single "start here" entrypoint. Read this first. |
+| [`specs`](https://github.com/llm-actuators/specs) | Cross-repo specifications and workflow references — the shared contracts the tools agree on. |
 
-### Visual & design
+### Control & policy plane — the guardrails, before an action runs
 | | |
 |---|---|
-| [`vdb`](https://github.com/llm-actuators/vdb) | Visual Debug Bridge — cross-platform drift + region matrices from `semantic-schema` input. |
-| [`fdb`](https://github.com/llm-actuators/fdb) | Figma Debug Bridge — emits the same schema from Figma frames; design-vs-built becomes a diff. |
+| [`skill-router`](https://github.com/llm-actuators/skill-router) | PreToolUse hook engine — matches every tool call against TOML rules and allows, denies, or reroutes it. Policy-as-code, enforced before the action runs. |
+| [`workflows`](https://github.com/llm-actuators/workflows) | A workflow state-machine enforcer over hooks — stops an agent skipping required steps or acting out of order. |
+| [`substrate`](https://github.com/llm-actuators/substrate) | The scaffolding layer — skills + primitives + configs + hooks + memory, so adding a project, company or primitive is one command. |
+| [`hooks`](https://github.com/llm-actuators/hooks) | The hook enforcement + session-lifecycle layer — PreToolUse/PostToolUse gates, plus session-start (pins the true model id) and post-compact (recovers active skills, drives resume). |
 
-### Coordination
+### Coordination substrate — how agents and devices talk
 | | |
 |---|---|
-| [`switchboard`](https://github.com/llm-actuators/switchboard) | File-based pub/sub for multi-Claude sessions. Append-only JSONL, flock-based presence, no daemon. |
-| [`recruit`](https://github.com/llm-actuators/recruit) | Mid-session teammate spawner — splits the tmux window, launches `claude-safe`, pre-wires the new pane onto the recruiter's switchboard channel. Repo also ships `dismiss` and `idle-scout`. |
+| [`switchboard`](https://github.com/llm-actuators/switchboard) | The message bus. File-based pub/sub for multi-session coordination — append-only JSONL, flock-based presence, no daemon. |
+| [`switchboard-ios`](https://github.com/llm-actuators/switchboard-ios) | A native SwiftUI client to watch and post to the switchboard wire from an iPhone. |
+| [`todo`](https://github.com/llm-actuators/todo) | A priority-aware, Markdown-backed shared todo list for an agent cohort to coordinate work. |
+| [`device-claim`](https://github.com/llm-actuators/device-claim) | A per-device mutex so two agents never drive the same physical device at once — lease-based locking with liveness. |
+| [`resources`](https://github.com/llm-actuators/resources) | Enumerates every active device, simulator and emulator and which claims are in flight. |
 
-### Session management
+### Actuation — the bridges an agent uses to touch a surface
 | | |
 |---|---|
-| [`token-monitor`](https://github.com/llm-actuators/token-monitor) | Watches context-window usage and fires milestone alarms (60/70/75/80/85/90%) so the session can compact deliberately before auto-compact wipes the transcript. |
-| [`compact-self`](https://github.com/llm-actuators/compact-self) | Injects `/compact` into the current Claude Code TUI via tmux. Pairs with `token-monitor`. |
-| [`remote-control`](https://github.com/llm-actuators/remote-control) | Injects `/remote-control` into the current pane so the Claude iOS app can drive the session over a VPN. |
+| [`idb`](https://github.com/llm-actuators/idb) | Control a real iPhone. A unified CLI over WebDriverAgent for touch, gestures and app control. |
+| [`ddb`](https://github.com/llm-actuators/ddb) | Control a real Android device. One CLI replacing a pile of adb scripts, scrcpy wrappers and heartbeat daemons. |
+| [`wdb`](https://github.com/llm-actuators/wdb) | Drive a browser or web admin panel. A single zero-dependency Go binary — "adb for the web". |
+| [`fdb`](https://github.com/llm-actuators/fdb) | Read a Figma design as structured data — extracts a UI semantic schema from design frames so intent can be diffed against implementation. |
+| [`vdb`](https://github.com/llm-actuators/vdb) | Catch visual UI drift across platforms — cross-platform drift detection and a region matrix over the shared schema. |
+| [`visual-qa`](https://github.com/llm-actuators/visual-qa) | The device-automation framework tying the bridges together. Semantic agents extract the live UI tree; tests are declarative YAML, cross-platform. |
+| [`semantic-schema`](https://github.com/llm-actuators/semantic-schema) | The shared UI wire format — canonical Rust types that let the Android, iOS and web bridges all speak one schema. |
+| [`device-control-ios`](https://github.com/llm-actuators/device-control-ios) | The WebDriverAgent integration that powers `idb`'s control of physical iPhones. |
+| [`tctl`](https://github.com/llm-actuators/tctl) | Test-control CLI for authoring and running device test cases against the bridges. Also the deepest toolchain doc authority. |
 
-### Orchestration
+### Fleet lifecycle — spawning, running and containing the agents
 | | |
 |---|---|
-| [`tctl`](https://github.com/llm-actuators/tctl) | Preflight → spec → suite test orchestrator. Walks specs, invokes the right device bridge per step, reports state over `switchboard`. Also the deepest toolchain doc authority. |
+| [`recruit`](https://github.com/llm-actuators/recruit) | Spawn a teammate mid-session — splits a tmux pane into a fresh agent seat; its counterpart `dismiss` retires one cleanly. Repo also ships `idle-scout`. |
+| [`fleet-tui`](https://github.com/llm-actuators/fleet-tui) | The mission-control dashboard — a read-only terminal view of every project bucket and every live agent at a glance. |
+| [`compact-self`](https://github.com/llm-actuators/compact-self) | Lets a running session compact its own context by injecting `/compact` into the TUI — self-maintenance under long runs. |
+| [`remote-control`](https://github.com/llm-actuators/remote-control) | Injects `/remote-control` into a running session so the Claude iOS app can drive it over a VPN. |
+| [`idle-work`](https://github.com/llm-actuators/idle-work) | Chunk + interrupt-safety helpers so long idle-pool work can be paused and resumed without corruption. |
+| [`claude-sandbox`](https://github.com/llm-actuators/claude-sandbox) | Runs the agent inside a macOS Seatbelt sandbox, plus the `nosandbox` escape hatch for tools that fail under it. |
 
-### Infrastructure
+### Observability & ops — keeping a supervised fleet dependable and on-budget
 | | |
 |---|---|
-| [`skill-router`](https://github.com/llm-actuators/skill-router) | PreToolUse hook engine — enforces "always go through skill X" invariants on every Bash call. |
-| [`substrate`](https://github.com/llm-actuators/substrate) | Skill ecosystem CLI + scaffold spec. Enrolls repos, deploys T1/T2 skills, validates F1–F16 invariants. Hosts the three META primitives still bundled with the spec (`substrate`, `bootstrap`, `dashboard`); the rest are extracted siblings (`skill-router`, `compact-self`, `token-monitor`, `claude-sandbox`). |
-| [`claude-sandbox`](https://github.com/llm-actuators/claude-sandbox) | macOS Seatbelt profile + `nosandbox` escape hatch for tools that fail under the sandbox. |
-| [`actuators-doctor`](https://github.com/llm-actuators/actuators-doctor) | Fleet-wide health probe — version drift, dep resolution, schema compat, env preconditions. |
-
-### Docs
-| | |
-|---|---|
-| [`llms`](https://github.com/llm-actuators/llms) | The canonical entrypoint. `llms.txt`, getting-started, use cases, interaction graph, role layer. Read this first. |
+| [`token-monitor`](https://github.com/llm-actuators/token-monitor) | Reads a session's live token usage from the transcript and fires milestone alarms — so spend can be budgeted and the session compacts before auto-compact wipes it. |
+| [`burn`](https://github.com/llm-actuators/burn) | Aggregates token-burn across every session in the fleet — the cost picture across many agents at once. |
+| [`actuators-doctor`](https://github.com/llm-actuators/actuators-doctor) | A fleet-wide health check that verifies every llm-actuators binary is present, current and working. |
+| [`fleet-tooling`](https://github.com/llm-actuators/fleet-tooling) | Fleet-digest + ops tooling — aggregates live state from `switchboard`, `todo` and `resources` into the operator's digest; also the idle-worktree helper for background work. |
 
 ---
 
