@@ -76,3 +76,7 @@ Drive phones and browsers from an LLM. All three emit the same semantic schema s
 ## How the fleet is governed
 
 [**Read the governance model →**](https://github.com/llm-actuators/.github/blob/main/governance.md) — the problems that forced each rule, and the principles they left behind.
+
+---
+
+Designed, built and operated by **Siniša Marjanović** · [LinkedIn](https://www.linkedin.com/in/sinisa-m-150b3988) · [GitHub](https://github.com/marjan89)
